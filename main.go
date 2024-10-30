@@ -20,11 +20,10 @@ func main() {
 	routes.RegisterCacheRoutes(app, cache)
 
 	middlewares.DefaultMiddleware(app)
-	
-	app.Get("/swagger/*", swagger.HandlerDefault) // default
 
 	if configs.GetEnv("ENV") == "dev" {
 		helpers.StartServer(app)
+		app.Get("/swagger/*", swagger.HandlerDefault) // default
 	} else {
 		helpers.StartServerWithGracefulShutdown(app)
 
