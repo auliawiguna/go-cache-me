@@ -10,7 +10,7 @@ import (
 
 	_ "go-cache-me/docs" // replace with the actual path to your docs folder
 
-	swagger "github.com/arsmn/fiber-swagger/v2"
+	swagger "github.com/gofiber/swagger"
 )
 
 func main() {
@@ -20,6 +20,7 @@ func main() {
 	routes.RegisterCacheRoutes(app, cache)
 
 	middlewares.DefaultMiddleware(app)
+	
 	app.Get("/swagger/*", swagger.HandlerDefault) // default
 
 	if configs.GetEnv("ENV") == "dev" {

@@ -1,4 +1,96 @@
+definitions:
+  controllers.CacheRequest:
+    properties:
+      key:
+        type: string
+      ttl:
+        type: string
+      value: {}
+    type: object
 info:
   contact: {}
-paths: {}
+paths:
+  /cache:
+    post:
+      consumes:
+      - application/json
+      description: Set a key-value pair in the cache
+      parameters:
+      - description: Cache Request
+        in: body
+        name: cacheRequest
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.CacheRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Invalid TTL
+      summary: Set a key-value pair
+      tags:
+      - cache
+  /cache/{key}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a key-value pair from the cache
+      parameters:
+      - description: Key
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Delete a key-value pair
+      tags:
+      - cache
+    get:
+      consumes:
+      - application/json
+      description: Get a key-value pair from the cache
+      parameters:
+      - description: Key
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Key not found
+      summary: Get a key-value pair
+      tags:
+      - cache
+  /cache/get-or-set:
+    post:
+      consumes:
+      - application/json
+      description: Get or set a key-value pair in the cache
+      parameters:
+      - description: Cache Request
+        in: body
+        name: cacheRequest
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.CacheRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Invalid TTL
+      summary: Get or set a key-value pair
+      tags:
+      - cache
 swagger: "2.0"
