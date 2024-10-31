@@ -27,7 +27,7 @@ var cache = helpers.CacheInstance
 // @Failure 404 "Key not found"
 // @Router /api/v0/cache/{key} [get]
 func GetAllCache(c *fiber.Ctx) error {
-	value := cache.GetAll()
+	value := helpers.GetAllCache()
 
 	return c.JSON(value)
 }
@@ -53,7 +53,7 @@ func SetCache(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid TTL")
 	}
 
-	cache.Set(req.Key, req.Value, ttl)
+	helpers.SetCookie(req.Key, req.Value, ttl)
 
 	return c.SendStatus(fiber.StatusCreated)
 }
@@ -70,7 +70,7 @@ func SetCache(c *fiber.Ctx) error {
 func GetCache(c *fiber.Ctx) error {
 	key := c.Params("key")
 
-	value, found := cache.Get(key)
+	value, found := helpers.GetCache(key)
 
 	if !found {
 		return fiber.NewError(fiber.StatusNotFound, "Key not found")
@@ -90,7 +90,7 @@ func GetCache(c *fiber.Ctx) error {
 func DeleteCache(c *fiber.Ctx) error {
 	key := c.Params("key")
 
-	cache.Delete(key)
+	helpers.DeleteCache(key)
 
 	return c.SendStatus(fiber.StatusNoContent)
 }
@@ -116,11 +116,11 @@ func GetOrSetCache(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid TTL")
 	}
 
-	value, found := cache.Get(req.Key)
+	value, found := helpers.GetCache(req.Key)
 	log.Printf("Value: %v, Found: %v", value, found)
 
 	if !found {
-		cache.Set(req.Key, req.Value, ttl)
+		helpers.SetCookie(req.Key, req.Value, ttl)
 		return c.JSON(req.Value)
 	}
 

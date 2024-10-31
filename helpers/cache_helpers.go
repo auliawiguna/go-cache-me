@@ -15,13 +15,16 @@ type Cache struct {
 
 var DbInstance *sql.DB
 var CacheInstance *Cache
+var once sync.Once
 
 func NewCache() *Cache {
-	CacheInstance = &Cache{
-		items: make(map[string]models.CacheItem),
-	}
+	once.Do(func() {
+		CacheInstance = &Cache{
+			items: make(map[string]models.CacheItem),
+		}
 
-	go CacheInstance.CleanupExpired()
+		go CleanupExpiredCache()
+	})
 
 	return CacheInstance
 }
@@ -30,40 +33,41 @@ func InitDb(db *sql.DB) {
 	DbInstance = db
 }
 
-func (c *Cache) DirectCacheSet(key string, value interface{}, ttl time.Duration) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+func DirectCacheSet(key string, value interface{}, ttl time.Duration) {
+	CacheInstance.mu.Lock()
+	defer CacheInstance.mu.Unlock()
 
-	c.items[key] = models.CacheItem{
+	CacheInstance.items[key] = models.CacheItem{
 		Value:     value,
 		ExpiresAt: time.Now().Add(ttl),
 	}
 }
 
-func (c *Cache) Set(key string, value interface{}, ttl time.Duration) {
-	c.DirectCacheSet(key, value, ttl)
+func SetCookie(key string, value interface{}, ttl time.Duration) {
+	DirectCacheSet(key, value, ttl)
 
 	DbInstance.Exec("INSERT INTO cache (key, value, expires_at) VALUES (?, ?, ?)", key, value, time.Now().Add(ttl))
 }
 
-func (c *Cache) GetAll() map[string]models.CacheItem {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+func GetAllCache() map[string]models.CacheItem {
+	CacheInstance.mu.RLock()
+	defer CacheInstance.mu.RUnlock()
 
 	// Create a copy of the cache items
-	itemsCopy := make(map[string]models.CacheItem, len(c.items))
-	for k, v := range c.items {
+	itemsCopy := make(map[string]models.CacheItem, len(CacheInstance.items))
+	for k, v := range CacheInstance.items {
 		itemsCopy[k] = v
 	}
 
 	return itemsCopy
 }
 
-func (c *Cache) Get(key string) (interface{}, bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+func GetCache(key string) (interface{}, bool) {
 
-	item, found := c.items[key]
+	CacheInstance.mu.RLock()
+	defer CacheInstance.mu.RUnlock()
+
+	item, found := CacheInstance.items[key]
 	if found && item.ExpiresAt.After(time.Now()) {
 		return item.Value, true
 	}
@@ -77,13 +81,16 @@ func (c *Cache) Get(key string) (interface{}, bool) {
 	log.Println("Querying from DB for", key)
 	err := row.Scan(&value, &expiresAt)
 	log.Println("Scanning from DB for", key)
-	if err == sql.ErrNoRows || expiresAt.Before(time.Now()) {
+	if err == sql.ErrNoRows {
+		return nil, false
+	} else if expiresAt.Before(time.Now()) {
+		DbInstance.Exec("DELETE FROM cache WHERE key = ?", key)
 		return nil, false
 	} else if err != nil {
 		return nil, false
 	}
 
-	c.items[key] = models.CacheItem{
+	CacheInstance.items[key] = models.CacheItem{
 		Value:     value,
 		ExpiresAt: expiresAt,
 	}
@@ -91,25 +98,25 @@ func (c *Cache) Get(key string) (interface{}, bool) {
 	return value, true
 }
 
-func (c *Cache) Delete(key string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+func DeleteCache(key string) {
+	CacheInstance.mu.Lock()
+	defer CacheInstance.mu.Unlock()
 
-	delete(c.items, key)
+	delete(CacheInstance.items, key)
 
 	DbInstance.Exec("DELETE FROM cache WHERE key = ?", key)
 }
 
-func (c *Cache) CleanupExpired() {
+func CleanupExpiredCache() {
 	for {
 		time.Sleep(time.Minute)
-		c.mu.Lock()
-		for key, item := range c.items {
+		CacheInstance.mu.Lock()
+		for key, item := range CacheInstance.items {
 			if item.ExpiresAt.Before(time.Now()) {
-				delete(c.items, key)
+				delete(CacheInstance.items, key)
 				DbInstance.Exec("DELETE FROM cache WHERE key = ?", key)
 			}
 		}
-		c.mu.Unlock()
+		CacheInstance.mu.Unlock()
 	}
 }

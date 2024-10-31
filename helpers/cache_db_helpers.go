@@ -30,7 +30,7 @@ func SaveCacheToDatabase(db *sql.DB, cache *Cache) error {
 		return err
 	}
 
-	var items = cache.GetAll()
+	var items = GetAllCache()
 	// Log the retrieved items
 	log.Println("Cache items:", items)
 
@@ -69,7 +69,7 @@ func LoadCacheFromDatabase(db *sql.DB, cache *Cache) error {
 		}
 		log.Println("Caching:", key) // Log the row count
 
-		cache.DirectCacheSet(key, value, time.Until(expiresAt))
+		DirectCacheSet(key, value, time.Until(expiresAt))
 		rowCount++ // Increment the counter
 	}
 

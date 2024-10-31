@@ -14,7 +14,7 @@ func StartCacheCleanupJob(cache *helpers.Cache) {
 
 	s.Every(60).Seconds().Do(func() {
 		log.Println("Running cache cleanup job")
-		cache.CleanupExpired()
+		helpers.CleanupExpiredCache()
 	})
 
 	s.StartAsync()
