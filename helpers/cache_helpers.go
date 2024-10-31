@@ -16,7 +16,7 @@ func NewCache() *Cache {
 		items: make(map[string]models.CacheItem),
 	}
 
-	go c.cleanupExpired()
+	go c.CleanupExpired()
 
 	return c
 }
@@ -50,15 +50,15 @@ func (c *Cache) Delete(key string) {
 	delete(c.items, key)
 }
 
-func (c *Cache) cleanupExpired() {
+func (c *Cache) CleanupExpired() {
 	for {
 		time.Sleep(time.Minute)
 		c.mu.Lock()
+		defer c.mu.Unlock()
 		for key, item := range c.items {
 			if item.ExpiresAt.Before(time.Now()) {
 				delete(c.items, key)
 			}
 		}
-		c.mu.Unlock()
 	}
 }

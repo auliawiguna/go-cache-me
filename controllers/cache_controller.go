@@ -25,7 +25,7 @@ var cache = helpers.NewCache()
 // @Param cacheRequest body controllers.CacheRequest true "Cache Request"
 // @Success 201 "Created"
 // @Failure 400 "Invalid TTL"
-// @Router /cache [post]
+// @Router /api/cache [post]
 func SetCache(c *fiber.Ctx) error {
 	var req CacheRequest
 
@@ -51,7 +51,7 @@ func SetCache(c *fiber.Ctx) error {
 // @Param key path string true "Key"
 // @Success 200 "OK"
 // @Failure 404 "Key not found"
-// @Router /cache/{key} [get]
+// @Router /api/cache/{key} [get]
 func GetCache(c *fiber.Ctx) error {
 	key := c.Params("key")
 
@@ -71,7 +71,7 @@ func GetCache(c *fiber.Ctx) error {
 // @Produce json
 // @Param key path string true "Key"
 // @Success 204 "No Content"
-// @Router /cache/{key} [delete]
+// @Router /api/cache/{key} [delete]
 func DeleteCache(c *fiber.Ctx) error {
 	key := c.Params("key")
 
@@ -88,7 +88,7 @@ func DeleteCache(c *fiber.Ctx) error {
 // @Param cacheRequest body controllers.CacheRequest true "Cache Request"
 // @Success 200 "OK"
 // @Failure 400 "Invalid TTL"
-// @Router /cache/get-or-set [post]
+// @Router /api/cache/get-or-set [post]
 func GetOrSetCache(c *fiber.Ctx) error {
 	var req CacheRequest
 

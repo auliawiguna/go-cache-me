@@ -9,7 +9,7 @@ import (
 )
 
 func RegisterCacheRoutes(app *fiber.App, cache *helpers.Cache) {
-	cacheRoute := app.Group("/cache", logger.New())
+	cacheRoute := app.Group("/api/cache", logger.New())
 
 	cacheRoute.Post("/", controllers.SetCache)
 	cacheRoute.Get("/:key", controllers.GetCache)

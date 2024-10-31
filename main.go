@@ -3,6 +3,7 @@ package main
 import (
 	"go-cache-me/configs"
 	"go-cache-me/helpers"
+	"go-cache-me/jobs"
 	"go-cache-me/middlewares"
 	"go-cache-me/routes"
 
@@ -20,6 +21,8 @@ func main() {
 	routes.RegisterCacheRoutes(app, cache)
 
 	middlewares.DefaultMiddleware(app)
+
+	jobs.StartCacheCleanupJob(cache)
 
 	if configs.GetEnv("ENV") == "dev" {
 		helpers.StartServer(app)
