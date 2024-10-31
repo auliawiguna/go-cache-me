@@ -35,7 +35,7 @@ func SaveCacheToDatabase(db *sql.DB, cache *Cache) error {
 	log.Println("Cache items:", items)
 
 	for key, item := range items {
-		_, err = db.Exec("INSERT INTO cache (key, value, expires_at) VALUES (?, ?, ?)", key, item.Value, item.ExpiresAt)
+		_, err = db.Exec("REPLACE INTO cache (key, value, expires_at) VALUES (?, ?, ?)", key, item.Value, item.ExpiresAt)
 		if err != nil {
 			log.Println(err)
 		}

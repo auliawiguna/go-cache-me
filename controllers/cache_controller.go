@@ -25,7 +25,7 @@ var cache = helpers.CacheInstance
 // @Param key path string true "Key"
 // @Success 200 "OK"
 // @Failure 404 "Key not found"
-// @Router /api/v0/cache/{key} [get]
+// @Router /api/v0/caches/{key} [get]
 func GetAllCache(c *fiber.Ctx) error {
 	value := helpers.GetAllCache()
 
@@ -66,7 +66,7 @@ func SetCache(c *fiber.Ctx) error {
 // @Param key path string true "Key"
 // @Success 200 "OK"
 // @Failure 404 "Key not found"
-// @Router /api/cache/{key} [get]
+// @Router /api/cache/key/{key} [get]
 func GetCache(c *fiber.Ctx) error {
 	key := c.Params("key")
 

@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v0/cache": {
+        "/api/cache": {
             "post": {
                 "description": "Set a key-value pair in the cache",
                 "consumes": [
@@ -49,7 +49,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v0/cache/get-or-set": {
+        "/api/cache/get-or-set": {
             "post": {
                 "description": "Get or set a key-value pair in the cache",
                 "consumes": [
@@ -83,7 +83,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v0/cache/{key}": {
+        "/api/cache/key/{key}": {
             "get": {
                 "description": "Get a key-value pair from the cache",
                 "consumes": [
@@ -113,7 +113,9 @@ const docTemplate = `{
                         "description": "Key not found"
                     }
                 }
-            },
+            }
+        },
+        "/api/cache/{key}": {
             "delete": {
                 "description": "Delete a key-value pair from the cache",
                 "consumes": [
@@ -138,6 +140,38 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/api/v0/caches/{key}": {
+            "get": {
+                "description": "Get a key-value pair from the cache",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cache"
+                ],
+                "summary": "Get a key-value pair",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Key not found"
                     }
                 }
             }

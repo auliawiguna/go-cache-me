@@ -46,7 +46,7 @@ func DirectCacheSet(key string, value interface{}, ttl time.Duration) {
 func SetCookie(key string, value interface{}, ttl time.Duration) {
 	DirectCacheSet(key, value, ttl)
 
-	DbInstance.Exec("INSERT INTO cache (key, value, expires_at) VALUES (?, ?, ?)", key, value, time.Now().Add(ttl))
+	DbInstance.Exec("REPLACE INTO cache (key, value, expires_at) VALUES (?, ?, ?)", key, value, time.Now().Add(ttl))
 }
 
 func GetAllCache() map[string]models.CacheItem {

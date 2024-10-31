@@ -10,7 +10,7 @@ definitions:
 info:
   contact: {}
 paths:
-  /api/v0/cache:
+  /api/cache:
     post:
       consumes:
       - application/json
@@ -32,7 +32,7 @@ paths:
       summary: Set a key-value pair
       tags:
       - cache
-  /api/v0/cache/{key}:
+  /api/cache/{key}:
     delete:
       consumes:
       - application/json
@@ -51,6 +51,29 @@ paths:
       summary: Delete a key-value pair
       tags:
       - cache
+  /api/cache/get-or-set:
+    post:
+      consumes:
+      - application/json
+      description: Get or set a key-value pair in the cache
+      parameters:
+      - description: Cache Request
+        in: body
+        name: cacheRequest
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.CacheRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Invalid TTL
+      summary: Get or set a key-value pair
+      tags:
+      - cache
+  /api/cache/key/{key}:
     get:
       consumes:
       - application/json
@@ -71,26 +94,25 @@ paths:
       summary: Get a key-value pair
       tags:
       - cache
-  /api/v0/cache/get-or-set:
-    post:
+  /api/v0/caches/{key}:
+    get:
       consumes:
       - application/json
-      description: Get or set a key-value pair in the cache
+      description: Get a key-value pair from the cache
       parameters:
-      - description: Cache Request
-        in: body
-        name: cacheRequest
+      - description: Key
+        in: path
+        name: key
         required: true
-        schema:
-          $ref: '#/definitions/controllers.CacheRequest'
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
-        "400":
-          description: Invalid TTL
-      summary: Get or set a key-value pair
+        "404":
+          description: Key not found
+      summary: Get a key-value pair
       tags:
       - cache
 swagger: "2.0"
