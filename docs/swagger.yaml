@@ -10,7 +10,7 @@ definitions:
 info:
   contact: {}
 paths:
-  /cache:
+  /api/v0/cache:
     post:
       consumes:
       - application/json
@@ -32,7 +32,7 @@ paths:
       summary: Set a key-value pair
       tags:
       - cache
-  /cache/{key}:
+  /api/v0/cache/{key}:
     delete:
       consumes:
       - application/json
@@ -71,7 +71,7 @@ paths:
       summary: Get a key-value pair
       tags:
       - cache
-  /cache/get-or-set:
+  /api/v0/cache/get-or-set:
     post:
       consumes:
       - application/json

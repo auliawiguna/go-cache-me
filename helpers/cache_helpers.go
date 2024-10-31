@@ -31,6 +31,19 @@ func (c *Cache) Set(key string, value interface{}, ttl time.Duration) {
 	}
 }
 
+func (c *Cache) GetAll() map[string]models.CacheItem {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	// Create a copy of the cache items
+	itemsCopy := make(map[string]models.CacheItem, len(c.items))
+	for k, v := range c.items {
+		itemsCopy[k] = v
+	}
+
+	return itemsCopy
+}
+
 func (c *Cache) Get(key string) (interface{}, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -54,11 +67,11 @@ func (c *Cache) CleanupExpired() {
 	for {
 		time.Sleep(time.Minute)
 		c.mu.Lock()
-		defer c.mu.Unlock()
 		for key, item := range c.items {
 			if item.ExpiresAt.Before(time.Now()) {
 				delete(c.items, key)
 			}
 		}
+		c.mu.Unlock()
 	}
 }

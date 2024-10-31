@@ -1,1 +1,7 @@
 .env
+
+# db
+/db/*.sqlite
+
+
+server

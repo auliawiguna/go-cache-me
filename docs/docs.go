@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/cache": {
+        "/api/v0/cache": {
             "post": {
                 "description": "Set a key-value pair in the cache",
                 "consumes": [
@@ -49,7 +49,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/cache/get-or-set": {
+        "/api/v0/cache/get-or-set": {
             "post": {
                 "description": "Get or set a key-value pair in the cache",
                 "consumes": [
@@ -83,7 +83,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/cache/{key}": {
+        "/api/v0/cache/{key}": {
             "get": {
                 "description": "Get a key-value pair from the cache",
                 "consumes": [

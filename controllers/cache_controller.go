@@ -17,6 +17,21 @@ type CacheRequest struct {
 
 var cache = helpers.NewCache()
 
+// @Summary Get a key-value pair
+// @Description Get a key-value pair from the cache
+// @Tags cache
+// @Accept json
+// @Produce json
+// @Param key path string true "Key"
+// @Success 200 "OK"
+// @Failure 404 "Key not found"
+// @Router /api/v0/cache/{key} [get]
+func GetAllCache(c *fiber.Ctx) error {
+	value := cache.GetAll()
+
+	return c.JSON(value)
+}
+
 // @Summary Set a key-value pair
 // @Description Set a key-value pair in the cache
 // @Tags cache
