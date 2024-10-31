@@ -1,7 +1,9 @@
 package helpers
 
 import (
+	"database/sql"
 	"go-cache-me/models"
+	"log"
 	"sync"
 	"time"
 )
@@ -11,17 +13,24 @@ type Cache struct {
 	items map[string]models.CacheItem
 }
 
+var DbInstance *sql.DB
+var CacheInstance *Cache
+
 func NewCache() *Cache {
-	c := &Cache{
+	CacheInstance = &Cache{
 		items: make(map[string]models.CacheItem),
 	}
 
-	go c.CleanupExpired()
+	go CacheInstance.CleanupExpired()
 
-	return c
+	return CacheInstance
 }
 
-func (c *Cache) Set(key string, value interface{}, ttl time.Duration) {
+func InitDb(db *sql.DB) {
+	DbInstance = db
+}
+
+func (c *Cache) DirectCacheSet(key string, value interface{}, ttl time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -29,6 +38,12 @@ func (c *Cache) Set(key string, value interface{}, ttl time.Duration) {
 		Value:     value,
 		ExpiresAt: time.Now().Add(ttl),
 	}
+}
+
+func (c *Cache) Set(key string, value interface{}, ttl time.Duration) {
+	c.DirectCacheSet(key, value, ttl)
+
+	DbInstance.Exec("INSERT INTO cache (key, value, expires_at) VALUES (?, ?, ?)", key, value, time.Now().Add(ttl))
 }
 
 func (c *Cache) GetAll() map[string]models.CacheItem {
@@ -49,11 +64,31 @@ func (c *Cache) Get(key string) (interface{}, bool) {
 	defer c.mu.RUnlock()
 
 	item, found := c.items[key]
-	if !found || item.ExpiresAt.Before(time.Now()) {
+	if found && item.ExpiresAt.After(time.Now()) {
+		return item.Value, true
+	}
+
+	// Find from DB
+	log.Println("Cache miss for key", key)
+	row := DbInstance.QueryRow("SELECT value, expires_at FROM cache WHERE key = ?", key)
+	var value string
+	var expiresAt time.Time
+
+	log.Println("Querying from DB for", key)
+	err := row.Scan(&value, &expiresAt)
+	log.Println("Scanning from DB for", key)
+	if err == sql.ErrNoRows || expiresAt.Before(time.Now()) {
+		return nil, false
+	} else if err != nil {
 		return nil, false
 	}
 
-	return item.Value, true
+	c.items[key] = models.CacheItem{
+		Value:     value,
+		ExpiresAt: expiresAt,
+	}
+
+	return value, true
 }
 
 func (c *Cache) Delete(key string) {
@@ -61,6 +96,8 @@ func (c *Cache) Delete(key string) {
 	defer c.mu.Unlock()
 
 	delete(c.items, key)
+
+	DbInstance.Exec("DELETE FROM cache WHERE key = ?", key)
 }
 
 func (c *Cache) CleanupExpired() {
@@ -70,6 +107,7 @@ func (c *Cache) CleanupExpired() {
 		for key, item := range c.items {
 			if item.ExpiresAt.Before(time.Now()) {
 				delete(c.items, key)
+				DbInstance.Exec("DELETE FROM cache WHERE key = ?", key)
 			}
 		}
 		c.mu.Unlock()

@@ -15,7 +15,7 @@ type CacheRequest struct {
 	Value interface{} `json:"value"`
 }
 
-var cache = helpers.NewCache()
+var cache = helpers.CacheInstance
 
 // @Summary Get a key-value pair
 // @Description Get a key-value pair from the cache

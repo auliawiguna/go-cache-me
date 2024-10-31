@@ -8,9 +8,6 @@ import (
 	"go-cache-me/middlewares"
 	"go-cache-me/routes"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -29,41 +26,21 @@ func main() {
 
 	app := fiber.New()
 	cache := helpers.NewCache()
-
-	routes.RegisterCacheRoutes(app, cache)
+	helpers.InitDb(db)
 
 	middlewares.DefaultMiddleware(app)
 
+	routes.RegisterCacheRoutes(app, cache)
+
 	jobs.StartCacheCleanupJob(cache)
+
+	if configs.GetEnv("ENV") == "dev" {
+		app.Get("/api/v0/docs/*", swagger.HandlerDefault) // default
+	}
 
 	// Load existing cache from database
 	if err := helpers.LoadCacheFromDatabase(db, cache); err != nil {
 		log.Fatal("Error loading cache from DB", err)
-	}
-
-	// Save cache to database on shutdown
-	go func() {
-		// Retrieve all cache items
-		items := cache.GetAll()
-
-		// Log the retrieved items
-		log.Println("Cache items before saving to DB:", items)
-
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-		<-c
-
-		log.Println("Saving cache to database")
-		if err := helpers.SaveCacheToDatabase(db, cache); err != nil {
-			log.Fatal("Error saving cache to DB", err)
-		}
-
-		log.Println("Shutting down")
-		os.Exit(0)
-	}()
-
-	if configs.GetEnv("ENV") == "dev" {
-		app.Get("/api/v0/docs/*", swagger.HandlerDefault) // default
 	}
 
 	if configs.GetEnv("ENV") == "dev" {

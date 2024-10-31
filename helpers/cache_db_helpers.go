@@ -46,16 +46,18 @@ func SaveCacheToDatabase(db *sql.DB, cache *Cache) error {
 
 func LoadCacheFromDatabase(db *sql.DB, cache *Cache) error {
 	err := PreparingDbCache(db)
-
 	if err != nil {
 		return err
 	}
 
+	log.Println("Loading cache from database")
 	rows, err := db.Query("SELECT key, value, expires_at FROM cache")
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
+
+	rowCount := 0 // Initialize the counter
 
 	for rows.Next() {
 		var key string
@@ -65,9 +67,13 @@ func LoadCacheFromDatabase(db *sql.DB, cache *Cache) error {
 		if err := rows.Scan(&key, &value, &expiresAt); err != nil {
 			return err
 		}
+		log.Println("Caching:", key) // Log the row count
 
-		cache.Set(key, value, expiresAt.Sub(time.Now()))
+		cache.DirectCacheSet(key, value, time.Until(expiresAt))
+		rowCount++ // Increment the counter
 	}
+
+	log.Println("Total rows processed:", rowCount) // Log the row count
 
 	return nil
 }
