@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"database/sql"
+	"go-cache-me/configs"
 	"go-cache-me/models"
 	"log"
 	"sync"
@@ -43,10 +44,50 @@ func DirectCacheSet(key string, value interface{}, ttl time.Duration) {
 	}
 }
 
+func updateCache(db *sql.DB, key string, value interface{}, ttl time.Duration) {
+	done := make(chan error, 1)
+
+	go func() {
+		tx, err := db.Begin()
+		if err != nil {
+			done <- err
+			return
+		}
+
+		_, err = tx.Exec("REPLACE INTO cache (key, value, expires_at) VALUES (?, ?, ?)", key, value, time.Now().Add(ttl))
+		if err != nil {
+			tx.Rollback()
+			done <- err
+			return
+		}
+
+		err = tx.Commit()
+		if err != nil {
+			tx.Rollback()
+			done <- err
+			return
+		}
+
+		done <- nil
+	}()
+
+	select {
+	case err := <-done:
+		if err != nil {
+			log.Printf("Failed to update cache: %v", err)
+		} else {
+			log.Println("Cache updated successfully")
+		}
+	case <-time.After(5 * time.Second): // Adjust timeout as needed
+		log.Println("Timeout while updating cache")
+	}
+}
+
 func SetCookie(key string, value interface{}, ttl time.Duration) {
 	DirectCacheSet(key, value, ttl)
-
-	DbInstance.Exec("REPLACE INTO cache (key, value, expires_at) VALUES (?, ?, ?)", key, value, time.Now().Add(ttl))
+	if configs.GetEnv("CACHE_SYSTEM") == "database" {
+		updateCache(DbInstance, key, value, ttl)
+	}
 }
 
 func GetAllCache() map[string]models.CacheItem {
@@ -115,6 +156,10 @@ func CleanupExpiredCache() {
 			if item.ExpiresAt.Before(time.Now()) {
 				delete(CacheInstance.items, key)
 				DbInstance.Exec("DELETE FROM cache WHERE key = ?", key)
+				log.Println("Deleted expired cache with key", key)
+			} else {
+				log.Println("Updating cache in db with key", key)
+				updateCache(DbInstance, key, item.Value, time.Until(item.ExpiresAt))
 			}
 		}
 		CacheInstance.mu.Unlock()
